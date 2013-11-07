@@ -6,17 +6,24 @@
   "browser_action": {
     "default_icon": "action-play.png"
   },
+  "content_scripts": [
+    {
+      "matches": ["*://*.pandora.com/*"],
+      "js": ["jquery.min.js", "pppandora.js"]
+    }
+  ],
   "description": "Play / Pause Pandora Tab",
   "icons": {
     "128": "icon_128.png"
   },
   "name": "Play / Pause Pandora Tab",
   "permissions": [
+    "notifications",
     "alarms",
     "tabs",
     "webNavigation",
-    "*://*.pandora.com/"
+    "*://*.pandora.com/*"
    ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "manifest_version": 2
 }
