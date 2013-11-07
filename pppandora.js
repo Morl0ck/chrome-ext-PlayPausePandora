@@ -35,7 +35,12 @@ $('.playerBarAlbum').bind("DOMNodeInserted",function () {
 });
 
 $('.albumArt').bind("DOMNodeInserted", function () {
-	songArt = $(this).find('img').attr('src');
+	var imgs = $(this).find('img');
+	if (imgs.length > 1) {
+		songArt = $(imgs[1]).attr('src');
+	} else {
+		songArt = $(imgs[0]).attr('src');
+	}
 	checkIfReadyToSend();
 });
 
