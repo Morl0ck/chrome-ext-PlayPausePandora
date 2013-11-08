@@ -163,12 +163,14 @@ function onUpdated(tabId, oChangeInfo, tab) {
   }
 }
 
+setInterval(stillListening, 60 * 1000);
+
 getPandoraTabId();
 chrome.browserAction.onClicked.addListener(goToPandora);
 chrome.tabs.onRemoved.addListener(pandoraTabRemoved);
-chrome.alarms.create('stillListening', {periodInMinutes: 1});
+//chrome.alarms.create('stillListening', {periodInMinutes: 1});
 chrome.runtime.onInstalled.addListener(onInit);
-chrome.alarms.onAlarm.addListener(onAlarm);
+//chrome.alarms.onAlarm.addListener(onAlarm);
 chrome.runtime.onMessage.addListener(onMessage);
 chrome.tabs.onCreated.addListener(onCreated);
 chrome.tabs.onUpdated.addListener(onUpdated);
