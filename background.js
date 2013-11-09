@@ -132,17 +132,20 @@ function onMessage(request, sender, sendResponse) {
       chrome.browserAction.setIcon({path:"action-pause.png"});
       break;
     case "songChanged":
-      var options = {
-        type: "list",
-        title: request.songTitle,
-        message: "",
-        iconUrl: request.songArt,
-        items: [
-          { title: "Artist", message: request.songArtist},
-          { title: "Album", message: request.songAlbum}
-        ]
+      if (parseBool(localStorage["showNotifications"])) {
+        var options = {
+          type: "list",
+          title: request.songTitle,
+          message: "",
+          iconUrl: request.songArt,
+          items: [
+            { title: "Artist", message: request.songArtist},
+            { title: "Album", message: request.songAlbum}
+          ]
+        }
+        chrome.notifications.create(options.title, options, function () {});
+        setTimeout(function() { chrome.notifications.clear(options.title, function() {}); }, 5000);
       }
-      chrome.notifications.create("", options, function (callback) { });
       break;
   }
 }
@@ -160,6 +163,10 @@ function onUpdated(tabId, oChangeInfo, tab) {
   if (tab.status == "complete" && isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({ path:"action-pause.png" });
     pandoraTabId = tab.id;
+  }
+  else if (tab.id == pandoraTabId && !isPandoraUrl(tab.url)) {
+    chrome.browserAction.setIcon({ path:"action-play.png" });
+    pandoraTabId = null;
   }
 }
 
