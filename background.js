@@ -1,5 +1,6 @@
 var pandoraTabId = null;
 var alreadyClicked = false;
+var requestTimer;
 
 function getPandoraUrl() {
   return "http://www.pandora.com/";
@@ -11,14 +12,14 @@ function isPandoraUrl(url) {
 }
 
 function stillListening() {
-  console.log("Yes Pandora, I'm still listening...");
+  // console.log("Yes Pandora, I'm still listening...");
   chrome.tabs.executeScript(pandoraTabId, {
     code: "document.getElementsByClassName('still_listening')[0].click()"
   });
 }
 
 function onInit() {
-  console.log("onInit");
+  // console.log("onInit");
   if (pandoraTabId != null) {
     chrome.tabs.executeScript(pandoraTabId, {
       code: 'var pauseButton = document.getElementsByClassName("pauseButton")[0]; \
@@ -36,11 +37,12 @@ function onInit() {
 }
 
 function pandoraTabRemoved(tabId, oRemoveInfo) {
-  console.log(tabId + " " + pandoraTabId);
+  // console.log(tabId + " " + pandoraTabId);
   if (tabId == pandoraTabId) {
-    console.log("Pandora tab closed! Nooooooooooooooo!");
+    // console.log("Pandora tab closed! Nooooooooooooooo!");
     chrome.browserAction.setIcon({path:"action-play.png"});
     pandoraTabId = null;
+    window.clearTimeout(requestTimer);
   }
 }
 
@@ -48,7 +50,7 @@ function getPandoraTabId() {
   chrome.tabs.getAllInWindow(undefined, function(tabs) {
     for (var i = 0, tab; tab = tabs[i]; i++) {
       if (tab.url && isPandoraUrl(tab.url)) {
-        console.log("Found tab id: " + tab.id);
+        // console.log("Found tab id: " + tab.id);
         pandoraTabId = tab.id;
         onPandoraTabFound();
       }
@@ -66,7 +68,7 @@ function goToPandora() {
 
     //Clear timer already set in earlier Click
     clearTimeout(timer);
-    console.log("Double click - skipping song");
+    // console.log("Double click - skipping song");
 
     chrome.tabs.executeScript(pandoraTabId, {
       code: "$('.skipButton').click();"
@@ -82,15 +84,15 @@ function goToPandora() {
   //Add a timer to detect next click to a sample of 250
   timer = setTimeout(function () {
     //No more clicks so, this is a single click
-    console.log("Single click");
+    // console.log("Single click");
 
-    console.log('Going to pandora...');
+    // console.log('Going to pandora...');
 
     chrome.tabs.getAllInWindow(undefined, function(tabs) {
       for (var i = 0, tab; tab = tabs[i]; i++) {
         if (tab.url && isPandoraUrl(tab.url)) {
           pandoraTabId = tab.id;
-          console.log('Found Pandora tab: ' + tab.url + '.');
+          // console.log('Found Pandora tab: ' + tab.url + '.');
           //chrome.tabs.update(tab.id, {selected: true});
           chrome.tabs.executeScript(pandoraTabId, {
             code: "$('.pauseButton:visible, .playButton:visible').click();"
@@ -102,7 +104,7 @@ function goToPandora() {
           return;
         }
       }
-      console.log('Could not find Pandora tab. Creating one...');
+      // console.log('Could not find Pandora tab. Creating one...');
       chrome.browserAction.setIcon({path:"action-pause.png"});
       chrome.tabs.create({url: getPandoraUrl()});
       getPandoraTabId();
@@ -117,7 +119,7 @@ function goToPandora() {
 }
 
 function onAlarm(alarm) {
-  console.log('Got alarm', alarm);
+  // console.log('Got alarm', alarm);
   if (alarm && alarm.name == 'stillListening') {
     stillListening();
   }
@@ -151,7 +153,7 @@ function onMessage(request, sender, sendResponse) {
 }
 
 function onCreated(tab) {
-  console.log("Tab Created", tab);
+  // console.log("Tab Created", tab);
   if (isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({path:"action-pause.png"});
     pandoraTabId = tab.id;
@@ -159,7 +161,7 @@ function onCreated(tab) {
 }
 
 function onUpdated(tabId, oChangeInfo, tab) {
-  console.log("Tab Updated", tab);
+  // console.log("Tab Updated", tab);
   if (tab.status == "complete" && isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({ path:"action-pause.png" });
     pandoraTabId = tab.id;
@@ -167,10 +169,11 @@ function onUpdated(tabId, oChangeInfo, tab) {
   else if (tab.id == pandoraTabId && !isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({ path:"action-play.png" });
     pandoraTabId = null;
+    window.clearTimeout(requestTimer);
   }
 }
 
-setInterval(stillListening, 60 * 1000);
+requestTimer = window.setInterval(stillListening, 60 * 1000);
 
 getPandoraTabId();
 chrome.browserAction.onClicked.addListener(goToPandora);
