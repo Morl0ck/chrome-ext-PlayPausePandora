@@ -7,7 +7,7 @@ function getPandoraUrl() {
 }
 
 function isPandoraUrl(url) {
-  // Return whether the URL starts with the Gmail prefix.
+  // Return whether the URL starts with the Pandora prefix.
   return url.indexOf(getPandoraUrl()) == 0;
 }
 
@@ -60,6 +60,8 @@ function getPandoraTabId() {
 
 function onPandoraTabFound() {
   chrome.browserAction.setIcon({path:"action-pause.png"});
+  window.clearTimeout(requestTimer);
+  requestTimer = window.setInterval(stillListening, 60 * 1000);
 }
 
 function goToPandora() {
@@ -157,23 +159,24 @@ function onCreated(tab) {
   if (isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({path:"action-pause.png"});
     pandoraTabId = tab.id;
+    window.clearTimeout(requestTimer);
+    requestTimer = window.setInterval(stillListening, 60 * 1000);
   }
 }
 
 function onUpdated(tabId, oChangeInfo, tab) {
+  window.clearTimeout(requestTimer);
   // console.log("Tab Updated", tab);
   if (tab.status == "complete" && isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({ path:"action-pause.png" });
     pandoraTabId = tab.id;
+    requestTimer = window.setInterval(stillListening, 60 * 1000);
   }
   else if (tab.id == pandoraTabId && !isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({ path:"action-play.png" });
     pandoraTabId = null;
-    window.clearTimeout(requestTimer);
   }
 }
-
-requestTimer = window.setInterval(stillListening, 60 * 1000);
 
 getPandoraTabId();
 chrome.browserAction.onClicked.addListener(goToPandora);
