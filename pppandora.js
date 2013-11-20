@@ -44,6 +44,27 @@ $('.albumArt').bind("DOMNodeInserted", function () {
 	checkIfReadyToSend();
 });
 
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+        if (request.greeting == "hello") {
+            sendResponse({message: "hi"});
+            getSongInfo();
+        }
+ });
+
+function getSongInfo() {
+	songTitle = $('.playerBarSong').text();
+	songArtist = $('.playerBarArtist').text();
+	songAlbum = $('.playerBarAlbum').text();
+	var imgs = $('.albumArt').find('img');
+	if (imgs.length > 1) {
+		songArt = $(imgs[1]).attr('src');
+	} else {
+		songArt = $(imgs[0]).attr('src');
+	}
+	checkIfReadyToSend();
+}
+
 function checkIfReadyToSend() {
 	if ( songTitle != null && 
 		 songArtist != null &&

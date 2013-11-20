@@ -33,6 +33,18 @@ function onInit() {
         chrome.browserAction.setIcon({path:"action-play.png"});
       }
     });
+
+    chrome.tabs.sendMessage(pandoraTabId, {greeting: "hello"}, function(response) {
+        if (response) {
+            // console.log("Already there");
+        }
+        else {
+            // console.log("Not there, inject contentscript");
+            chrome.tabs.executeScript(pandoraTabId, {file: "jquery.min.js"});
+            chrome.tabs.executeScript(pandoraTabId, {file: "pppandora.js"});
+            chrome.tabs.executeScript(pandoraTabId, {code: "getSongInfo();"});
+        }
+    });
   }
 }
 
@@ -136,6 +148,7 @@ function onMessage(request, sender, sendResponse) {
       chrome.browserAction.setIcon({path:"action-pause.png"});
       break;
     case "songChanged":
+      chrome.browserAction.setTitle({ title: "Song: " + request.songTitle + "\nArtist: " + request.songArtist + "\nAlbum: " + request.songAlbum });
       if (parseBool(localStorage["showNotifications"])) {
         var options = {
           type: "list",
