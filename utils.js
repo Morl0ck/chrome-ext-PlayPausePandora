@@ -1,3 +1,6 @@
 function parseBool(string) {
-  return string.toLowerCase() === 'true' ? true : false;
+	if (string != null)
+		return string.toLowerCase() === 'true' ? true : false;
+	else
+		return false;
 }

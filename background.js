@@ -1,5 +1,7 @@
 var pandoraTabId = null;
+var pandoraWindowId = null;
 var alreadyClicked = false;
+var DEBUG = false;
 var requestTimer;
 
 function getPandoraUrl() {
@@ -12,14 +14,20 @@ function isPandoraUrl(url) {
 }
 
 function stillListening() {
-  // console.log("Yes Pandora, I'm still listening...");
+  if (DEBUG)
+  {
+    console.log("Yes Pandora, I'm still listening...");
+  }
   chrome.tabs.executeScript(pandoraTabId, {
-    code: "document.getElementsByClassName('still_listening')[0].click()"
+    code: "$('.still_listening').click();"
   });
 }
 
 function onInit() {
-  // console.log("onInit");
+  if (DEBUG)
+  {
+    console.log("onInit");
+  }
   if (pandoraTabId != null) {
     chrome.tabs.executeScript(pandoraTabId, {
       code: 'var pauseButton = document.getElementsByClassName("pauseButton")[0]; \
@@ -33,38 +41,65 @@ function onInit() {
         chrome.browserAction.setIcon({path:"action-play.png"});
       }
     });
-
-    chrome.tabs.sendMessage(pandoraTabId, {greeting: "hello"}, function(response) {
-        if (response) {
-            // console.log("Already there");
-        }
-        else {
-            // console.log("Not there, inject contentscript");
-            chrome.tabs.executeScript(pandoraTabId, {file: "jquery.min.js"});
-            chrome.tabs.executeScript(pandoraTabId, {file: "pppandora.js"});
-            chrome.tabs.executeScript(pandoraTabId, {code: "getSongInfo();"});
-        }
-    });
   }
 }
 
+function checkIfPandoraHasScripts() {
+  chrome.tabs.sendMessage(pandoraTabId, {greeting: "hello"}, function(response) {
+    if (response) {
+        if (DEBUG)
+        {
+          console.log("Already there");
+        }
+    }
+    else {
+        if (DEBUG)
+        {
+          console.log("Content scripts not there, injecting content scripts");
+        }
+        chrome.tabs.executeScript(pandoraTabId, {file: "jquery.min.js"});
+        chrome.tabs.executeScript(pandoraTabId, {file: "pppandora.js"});
+        chrome.tabs.executeScript(pandoraTabId, {code: "getSongInfo();"});
+    }
+  });
+}
+
 function pandoraTabRemoved(tabId, oRemoveInfo) {
-  // console.log(tabId + " " + pandoraTabId);
+  if (DEBUG)
+  {
+    console.log(tabId + " " + pandoraTabId);
+  }
   if (tabId == pandoraTabId) {
-    // console.log("Pandora tab closed! Nooooooooooooooo!");
+    if (DEBUG)
+    {
+      console.log("Pandora tab closed! Nooooooooooooooo!");
+    }
     chrome.browserAction.setIcon({path:"action-play.png"});
     pandoraTabId = null;
     window.clearTimeout(requestTimer);
   }
 }
 
-function getPandoraTabId() {
-  chrome.tabs.getAllInWindow(undefined, function(tabs) {
+function getAllWindows() {
+  chrome.windows.getAll({populate:true},function (windows) {
+    for (var i = 0; i < windows.length; i++) {
+      getPandoraTabId(windows[i].id);
+    };
+  });
+}
+
+function getPandoraTabId(windowId) {
+  chrome.tabs.getAllInWindow(windowId, function(tabs) {
     for (var i = 0, tab; tab = tabs[i]; i++) {
       if (tab.url && isPandoraUrl(tab.url)) {
-        // console.log("Found tab id: " + tab.id);
+        if (DEBUG)
+        {
+          console.log("Found tab id: " + tab.id + " in window: " + windowId);
+        }
         pandoraTabId = tab.id;
+        pandoraWindowId = window.id;
         onPandoraTabFound();
+        checkIfPandoraHasScripts();
       }
     }
   });
@@ -82,7 +117,10 @@ function goToPandora() {
 
     //Clear timer already set in earlier Click
     clearTimeout(timer);
-    // console.log("Double click - skipping song");
+    if (DEBUG)
+    {
+      console.log("Double click - skipping song");
+    }
 
     chrome.tabs.executeScript(pandoraTabId, {
       code: "$('.skipButton').click();"
@@ -98,31 +136,28 @@ function goToPandora() {
   //Add a timer to detect next click to a sample of 250
   timer = setTimeout(function () {
     //No more clicks so, this is a single click
-    // console.log("Single click");
+    if (DEBUG)
+    {
+      console.log("Single click");
+    }
 
-    // console.log('Going to pandora...');
+    if (DEBUG)
+    {
+      console.log('Going to pandora...');
+    }
 
-    chrome.tabs.getAllInWindow(undefined, function(tabs) {
-      for (var i = 0, tab; tab = tabs[i]; i++) {
-        if (tab.url && isPandoraUrl(tab.url)) {
-          pandoraTabId = tab.id;
-          // console.log('Found Pandora tab: ' + tab.url + '.');
-          //chrome.tabs.update(tab.id, {selected: true});
-          chrome.tabs.executeScript(pandoraTabId, {
-            code: "$('.pauseButton:visible, .playButton:visible').click();"
-            // code: 'var pauseButton = document.getElementsByClassName("pauseButton")[0]; \
-            //        var playButton = document.getElementsByClassName("playButton")[0]; \
-            //        if (playButton.style.display == "none" ) { pauseButton.click(); "paused"; } \
-            //        else { playButton.click(); "playing"}'
-          })
-          return;
-        }
-      }
-      // console.log('Could not find Pandora tab. Creating one...');
+    if (pandoraTabId != null)
+    {
+      chrome.tabs.executeScript(pandoraTabId, {
+        code: "$('.pauseButton:visible, .playButton:visible').click();"
+      });
+    }
+    else
+    {
       chrome.browserAction.setIcon({path:"action-pause.png"});
       chrome.tabs.create({url: getPandoraUrl()});
-      getPandoraTabId();
-    });
+      getAllWindows();
+    }
 
     //Clear all timers
     clearTimeout(timer);
@@ -133,7 +168,10 @@ function goToPandora() {
 }
 
 function onAlarm(alarm) {
-  // console.log('Got alarm', alarm);
+  if (DEBUG)
+  {
+    console.log('Got alarm', alarm);
+  }
   if (alarm && alarm.name == 'stillListening') {
     stillListening();
   }
@@ -159,7 +197,7 @@ function onMessage(request, sender, sendResponse) {
             { title: "Artist", message: request.songArtist},
             { title: "Album", message: request.songAlbum}
           ]
-        }
+        };
         chrome.notifications.create(options.title, options, function () {});
         setTimeout(function() { chrome.notifications.clear(options.title, function() {}); }, 5000);
       }
@@ -168,7 +206,10 @@ function onMessage(request, sender, sendResponse) {
 }
 
 function onCreated(tab) {
-  // console.log("Tab Created", tab);
+  if (DEBUG)
+  {
+    console.log("Tab Created", tab);
+  }
   if (isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({path:"action-pause.png"});
     pandoraTabId = tab.id;
@@ -179,7 +220,10 @@ function onCreated(tab) {
 
 function onUpdated(tabId, oChangeInfo, tab) {
   window.clearTimeout(requestTimer);
-  // console.log("Tab Updated", tab);
+  if (DEBUG)
+  {
+    console.log("Tab Updated", tab);
+  }
   if (tab.status == "complete" && isPandoraUrl(tab.url)) {
     chrome.browserAction.setIcon({ path:"action-pause.png" });
     pandoraTabId = tab.id;
@@ -191,12 +235,10 @@ function onUpdated(tabId, oChangeInfo, tab) {
   }
 }
 
-getPandoraTabId();
+getAllWindows();
 chrome.browserAction.onClicked.addListener(goToPandora);
 chrome.tabs.onRemoved.addListener(pandoraTabRemoved);
-//chrome.alarms.create('stillListening', {periodInMinutes: 1});
-chrome.runtime.onInstalled.addListener(onInit);
-//chrome.alarms.onAlarm.addListener(onAlarm);
 chrome.runtime.onMessage.addListener(onMessage);
+chrome.runtime.onInstalled.addListener(onInit);
 chrome.tabs.onCreated.addListener(onCreated);
 chrome.tabs.onUpdated.addListener(onUpdated);
