@@ -25,6 +25,6 @@
     "webNavigation",
     "*://*.pandora.com/*"
    ],
-  "version": "1.0.9",
+  "version": "1.0.10",
   "manifest_version": 2
 }
