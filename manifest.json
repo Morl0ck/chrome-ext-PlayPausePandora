@@ -17,7 +17,8 @@
       "matches": ["*://*/*"],
       "exclude_matches" : ["*://*.pandora.com/*"],
       "js": ["jquery.min.js", "youtube_autopauser.js"],
-      "run_at": "document_end"
+      "run_at": "document_end",
+      "all_frames": true
     }
   ],
   "description": "Play / Pause Pandora Tab",
@@ -33,6 +34,6 @@
     "webNavigation",
     "*://*/*"
    ],
-  "version": "1.1.1",
+  "version": "1.1.2",
   "manifest_version": 2
 }
