@@ -1,6 +1,6 @@
-var songTitle = null, 
-	songArtist = null, 
-	songAlbum = null, 
+var songTitle = null,
+	songArtist = null,
+	songAlbum = null,
 	songArt = null;
 
 $('.pauseButton').on('click', function () {
@@ -52,6 +52,12 @@ chrome.runtime.onMessage.addListener(
         }
  });
 
+function getPlaying() {
+	chrome.runtime.sendMessage({
+		message: $('.pauseButton:visible').length > 0 ? "playing" : "paused"
+	});
+}
+
 function getSongInfo() {
 	songTitle = $('.playerBarSong').text();
 	songArtist = $('.playerBarArtist').text();
@@ -66,25 +72,25 @@ function getSongInfo() {
 }
 
 function checkIfReadyToSend() {
-	if ( songTitle != null && 
+	if ( songTitle != null &&
 		 songArtist != null &&
 		 songAlbum != null &&
 		 songArt != null ) {
 		sendSongChanged();
 	}
-	
+
 }
 
 function sendSongChanged() {
-  	chrome.runtime.sendMessage({ message: "songChanged", 
-								 songTitle: songTitle, 
-								 songArtist: songArtist, 
+  	chrome.runtime.sendMessage({ message: "songChanged",
+								 songTitle: songTitle,
+								 songArtist: songArtist,
 								 songArt: songArt,
 								 songAlbum: songAlbum });
 
   	// clear all variables for next check
   	songTitle = null;
-	songArtist = null; 
+	songArtist = null;
 	songAlbum = null;
 	songArt = null;
 }
