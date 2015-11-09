@@ -3,6 +3,7 @@ var pandoraWindowId = null;
 var isPlaying = false;
 var wasPlaying = false;
 var alreadyClicked = false;
+var doubleClicked = false;
 var DEBUG = false;
 
 var pandoraUrl = "http://www.pandora.com/";
@@ -106,19 +107,63 @@ function goToPandora() {
   if (alreadyClicked && pandoraTabId != null) {
     //Yes, Previous Click Detected
 
-    //Clear timer already set in earlier Click
-    clearTimeout(timer);
-    if (DEBUG)
-    {
-      console.log("Double click - skipping song");
+    if (doubleClicked) {
+      //Yes, already double clicked
+
+      if (DEBUG)
+      {
+        console.log('triple clicked');
+        console.log(localStorage['tripleClick']);
+      }
+
+      switch(localStorage['tripleClick']) {
+        case "thumbup":
+            chrome.tabs.executeScript(pandoraTabId, {
+              code: "$('.thumbUpButton').click();"
+            });
+            break;
+        case "thumbdown":
+            chrome.tabs.executeScript(pandoraTabId, {
+              code: "$('.thumbDownButton').click();"
+            });
+            break;
+        default:
+            break;
+      }
+
+      //Clear all timers
+      clearTimeout(timer);
+      clearTimeout(doubleClick);
+
+      //Clear all Clicks
+      alreadyClicked = false;
+      doubleClicked = false;
+      return;
+
     }
 
-    chrome.tabs.executeScript(pandoraTabId, {
-      code: "$('.skipButton').click();"
-    });
+    doubleClicked = true;
+    clearTimeout(timer);
 
-    //Clear all Clicks
-    alreadyClicked = false;
+    doubleClick = setTimeout(function () {
+      //Clear timer already set in earlier Click
+      
+      clearTimeout(doubleClick);
+      if (DEBUG)
+      {
+        console.log("Double click - skipping song");
+      }
+
+      chrome.tabs.executeScript(pandoraTabId, {
+        code: "$('.skipButton').click();"
+      });
+
+      //Clear all Clicks
+      alreadyClicked = false;
+      doubleClicked = false;
+      return;
+    }, 250)
+
     return;
   }
 
@@ -130,10 +175,6 @@ function goToPandora() {
     if (DEBUG)
     {
       console.log("Single click");
-    }
-
-    if (DEBUG)
-    {
       console.log('Going to pandora...');
     }
 
