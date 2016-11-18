@@ -6,7 +6,7 @@ var alreadyClicked = false;
 var doubleClicked = false;
 var DEBUG = false;
 
-var pandoraUrl = "http://www.pandora.com/";
+var pandoraUrl = "://www.pandora.com/";
 
 function isPandoraUrl(url) {
   // Return whether the URL starts with the Pandora prefix.
