@@ -3,46 +3,74 @@ var songTitle = null,
 	songAlbum = null,
 	songArt = null;
 
-$('.pauseButton').on('click', function () {
-	// send message to extension saying it is paused
-	chrome.runtime.sendMessage({message: "paused"});
-});
+// $('.PauseButton').on('click', function () {
+// 	// send message to extension saying it is paused
+// 	chrome.runtime.sendMessage({message: "paused"});
+// });
 
-$('.playButton').on('click', function () {
+$('.PlayButton').on('click', function () {
+	var status = $('.PlayButton').data('qa');
 	// send message to extension saying it is playing
-	chrome.runtime.sendMessage({message: "playing"});
+	chrome.runtime.sendMessage({
+		message: status == 'pause_button' ? "playing" : "paused"
+	});
 });
 
 // DOM Events Listed Below:
 //
 // DOMNodeInserted
 // DOMNodeRemoved
+// DOMAttrModified 
 // DOMSubtreeModified
 
-$('.playerBarSong').bind("DOMNodeInserted", function () {
-	songTitle = $(this).text();
-	checkIfReadyToSend();
-});
+// $('.nowPlayingTopInfo__current__trackName').bind("DOMNodeInserted", function () {
+// 	songTitle = $(this).text();
+// 	getSongInfo();
+// });
 
-$('.playerBarArtist').bind("DOMNodeInserted", function () {
-	songArtist = $(this).text();
-	checkIfReadyToSend();
-});
+// $('.nowPlayingTopInfo__current__artistName').bind("DOMNodeInserted", function () {
+// 	songArtist = $(this).text();
+// 	getSongInfo();
+// });
 
-$('.playerBarAlbum').bind("DOMNodeInserted",function () {
-	songAlbum = $(this).text();
-	checkIfReadyToSend();
-});
+// $('.nowPlayingTopInfo__current__albumName').bind("DOMNodeInserted",function () {
+// 	songAlbum = $(this).text();
+// 	getSongInfo();
+// });
 
-$('.albumArt').bind("DOMNodeInserted", function () {
-	var imgs = $(this).find('img');
-	if (imgs.length > 1) {
-		songArt = $(imgs[1]).attr('src');
-	} else {
-		songArt = $(imgs[0]).attr('src');
+// $('.nowPlayingTopInfo__artContainer__art').bind("DOMNodeInserted", function () {
+// 	// var imgs = $(this).find('img');
+// 	// if (imgs.length > 1) {
+// 	// 	songArt = $(imgs[1]).attr('src');
+// 	// } else {
+// 	// 	songArt = $(imgs[0]).attr('src');
+// 	// }
+// 	songArt = $('meta[property="og:image"]').attr('content');
+// 	getSongInfo();
+// });
+
+var nowPlayingSong = "";
+var nowPlayingArtist = "";
+var nowPlayingAlbum = "";
+
+setInterval(function () {
+	var currentSong = $('.nowPlayingTopInfo__current__trackName').text();
+	var currentArtist = $('.nowPlayingTopInfo__current__artistName').text();
+	var currentAlbum = $('.nowPlayingTopInfo__current__albumName').text();
+
+	if (nowPlayingSong != currentSong
+		&& nowPlayingArtist != currentArtist
+		&& nowPlayingAlbum != currentAlbum)
+	{
+		getSongInfo();
+		nowPlayingSong = currentSong;
+		nowPlayingArtist = currentArtist;
+		nowPlayingAlbum = currentAlbum;
 	}
-	checkIfReadyToSend();
-});
+
+	getPlaying();
+
+}, 1000)
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
@@ -53,21 +81,24 @@ chrome.runtime.onMessage.addListener(
  });
 
 function getPlaying() {
+	var status = $('.PlayButton').data('qa');
+
 	chrome.runtime.sendMessage({
-		message: $('.pauseButton:visible').length > 0 ? "playing" : "paused"
+		message: status == 'pause_button' ? "playing" : "paused"
 	});
 }
 
 function getSongInfo() {
-	songTitle = $('.playerBarSong').text();
-	songArtist = $('.playerBarArtist').text();
-	songAlbum = $('.playerBarAlbum').text();
-	var imgs = $('.albumArt').find('img');
-	if (imgs.length > 1) {
-		songArt = $(imgs[1]).attr('src');
-	} else {
-		songArt = $(imgs[0]).attr('src');
-	}
+	songTitle = $('.nowPlayingTopInfo__current__trackName').text();
+	songArtist = $('.nowPlayingTopInfo__current__artistName').text();
+	songAlbum = $('.nowPlayingTopInfo__current__albumName').text();
+	// var imgs = $('.nowPlayingTopInfo__artContainer__art').find('img');
+	// if (imgs.length > 1) {
+	// 	songArt = $(imgs[1]).attr('src');
+	// } else {
+	// 	songArt = $(imgs[0]).attr('src');
+	// }
+	songArt = $('.nowPlayingTopInfo__artContainer__art').first().css('background-image').replace(/url\(|\)|\"/g, '')
 	checkIfReadyToSend();
 }
 
@@ -94,3 +125,5 @@ function sendSongChanged() {
 	songAlbum = null;
 	songArt = null;
 }
+
+// getPlaying(); getSongInfo();
