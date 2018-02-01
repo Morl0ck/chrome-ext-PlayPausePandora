@@ -52,25 +52,33 @@ $('.PlayButton').on('click', function () {
 var nowPlayingSong = "";
 var nowPlayingArtist = "";
 var nowPlayingAlbum = "";
+var nowPlayingAlbumArt = "";
 
 setInterval(function () {
-	var currentSong = $('.nowPlayingTopInfo__current__trackName').text();
-	var currentArtist = $('.nowPlayingTopInfo__current__artistName').text();
-	var currentAlbum = $('.nowPlayingTopInfo__current__albumName').text();
+	var currentSong = $('.nowPlayingTopInfo__current__trackName').text().trim();
+	var currentArtist = $('.nowPlayingTopInfo__current__artistName').text().trim();
+	var currentAlbum = $('.nowPlayingTopInfo__current__albumName').text().trim();
+	var currentAlbumArt = $('.nowPlayingTopInfo__artContainer__art').first().css('background-image').replace(/url\(|\)|\"/g, '').trim()
 
-	if (nowPlayingSong != currentSong
+	if (currentSong != ""
+		&& currentArtist != ""
+		&& currentAlbum != ""
+		&& currentAlbumArt != ""
+		&& nowPlayingSong != currentSong
 		&& nowPlayingArtist != currentArtist
-		&& nowPlayingAlbum != currentAlbum)
+		&& nowPlayingAlbum != currentAlbum
+		&& nowPlayingAlbumArt != currentAlbumArt)
 	{
 		getSongInfo();
 		nowPlayingSong = currentSong;
 		nowPlayingArtist = currentArtist;
 		nowPlayingAlbum = currentAlbum;
+		nowPlayingAlbumArt = currentAlbumArt;
 	}
 
 	getPlaying();
 
-}, 1000)
+}, 100)
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
@@ -89,24 +97,18 @@ function getPlaying() {
 }
 
 function getSongInfo() {
-	songTitle = $('.nowPlayingTopInfo__current__trackName').text();
-	songArtist = $('.nowPlayingTopInfo__current__artistName').text();
-	songAlbum = $('.nowPlayingTopInfo__current__albumName').text();
-	// var imgs = $('.nowPlayingTopInfo__artContainer__art').find('img');
-	// if (imgs.length > 1) {
-	// 	songArt = $(imgs[1]).attr('src');
-	// } else {
-	// 	songArt = $(imgs[0]).attr('src');
-	// }
-	songArt = $('.nowPlayingTopInfo__artContainer__art').first().css('background-image').replace(/url\(|\)|\"/g, '')
+	songTitle = $('.nowPlayingTopInfo__current__trackName').text().trim();
+	songArtist = $('.nowPlayingTopInfo__current__artistName').text().trim();
+	songAlbum = $('.nowPlayingTopInfo__current__albumName').text().trim();
+	songArt = $('.nowPlayingTopInfo__artContainer__art').first().css('background-image').replace(/url\(|\)|\"/g, '').trim()
 	checkIfReadyToSend();
 }
 
 function checkIfReadyToSend() {
-	if ( songTitle != null &&
-		 songArtist != null &&
-		 songAlbum != null &&
-		 songArt != null ) {
+	if ( songTitle != null && songTitle != "" &&
+		 songArtist != null && songArtist != "" &&
+		 songAlbum != null && songAlbum != "" &&
+		 songArt != null && songArt != "") {
 		sendSongChanged();
 	}
 
