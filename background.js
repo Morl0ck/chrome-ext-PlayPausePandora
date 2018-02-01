@@ -104,6 +104,25 @@ function onPandoraTabFound() {
   isPlaying = true;
 }
 
+function skipSong() {
+  chrome.tabs.executeScript(pandoraTabId, {
+    code: "$('.SkipButton').click();"
+  });
+}
+
+function thumbUpSong() {
+  chrome.tabs.executeScript(pandoraTabId, {
+    //code: "$('.ThumbUpButton').click();"
+    code: "$('button[class*=ThumbUp]').click();"
+  });
+}
+
+function thumbDownSong() {
+  chrome.tabs.executeScript(pandoraTabId, {
+    code: "$('.ThumbDownButton').click();"
+  });
+}
+
 function goToPandora() {
   if (alreadyClicked && pandoraTabId != null) {
     //Yes, Previous Click Detected
@@ -118,16 +137,14 @@ function goToPandora() {
       }
 
       switch(localStorage['tripleClick']) {
+        case "skipsong":
+            skipSong();
+            break;
         case "thumbup":
-            chrome.tabs.executeScript(pandoraTabId, {
-              //code: "$('.ThumbUpButton').click();"
-              code: "$('button[class*=ThumbUp]').click();"
-            });
+            thumbUpSong()
             break;
         case "thumbdown":
-            chrome.tabs.executeScript(pandoraTabId, {
-              code: "$('.ThumbDownButton').click();"
-            });
+            thumbDownSong()
             break;
         default:
             break;
@@ -153,12 +170,22 @@ function goToPandora() {
       clearTimeout(doubleClick);
       if (DEBUG)
       {
-        console.log("Double click - skipping song");
+        console.log("Double clicked");
       }
 
-      chrome.tabs.executeScript(pandoraTabId, {
-        code: "$('.SkipButton').click();"
-      });
+      switch(localStorage['doubleClick']) {
+        case "skipsong":
+            skipSong();
+            break;
+        case "thumbup":
+            thumbUpSong()
+            break;
+        case "thumbdown":
+            thumbDownSong()
+            break;
+        default:
+            break;
+      }
 
       //Clear all Clicks
       alreadyClicked = false;
